@@ -20,7 +20,7 @@ import pprint
 import typing
 import warnings
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional, Tuple
 
 from google.api.distribution_pb2 import Distribution
@@ -55,10 +55,7 @@ class CloudMonitoringMqlBackend:
         )
 
     def good_bad_ratio(
-        self,
-        timestamp: int,
-        window: int,
-        slo_config: dict,
+        self, timestamp: int, window: int, slo_config: dict
     ) -> Tuple[int, int]:
         """Query two timeseries, one containing 'good' events, one containing
         'bad' events.
@@ -99,10 +96,7 @@ class CloudMonitoringMqlBackend:
 
     # pylint: disable=too-many-locals,disable=unused-argument
     def distribution_cut(
-        self,
-        timestamp: int,
-        window: int,
-        slo_config: dict,
+        self, timestamp: int, window: int, slo_config: dict
     ) -> Tuple[int, int]:
         """Query one timeseries of type 'exponential'.
 
@@ -224,9 +218,7 @@ class CloudMonitoringMqlBackend:
 
     @staticmethod
     def enrich_query_with_time_horizon_and_period(
-        timestamp: float,
-        window: int,
-        query: str,
+        timestamp: float, window: int, query: str
     ) -> str:
         """Enrich MQL query with time period and horizon.
         Args:
@@ -240,8 +232,10 @@ class CloudMonitoringMqlBackend:
         # epoch, in UTC, with decimal part representing nanoseconds.
         # MQL expects dates formatted like "%Y/%m/%d %H:%M:%S" or "%Y/%m/%d-%H:%M:%S".
         # Reference: https://cloud.google.com/monitoring/mql/reference#lexical-elements
-        end_time_str: str = datetime.fromtimestamp(timestamp).strftime(
-            "%Y/%m/%d %H:%M:%S"
+        end_time_str: str = (
+            datetime.fromtimestamp(timestamp)
+            .astimezone(tz=timezone.utc)
+            .strftime("%Y/%m/%d %H:%M:%S")
         )
         query_with_time_horizon_and_period: str = (
             query
